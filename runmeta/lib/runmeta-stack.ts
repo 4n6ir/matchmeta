@@ -101,10 +101,10 @@ export class RunmetaStack extends cdk.Stack {
           ]),
           awscopygetmeta: new ec2.InitConfig([
             ec2.InitCommand.shellCommand(
-              '/usr/bin/pip3 install getmeta',
+              'pip3 install getmeta',
             ),
             ec2.InitCommand.shellCommand(
-              'cd /tmp && /usr/local/bin/getmeta',
+              'cd /tmp && getmeta',
             ),
             ec2.InitCommand.shellCommand(
               'aws s3 cp /tmp/ip-* s3://'+raw,
