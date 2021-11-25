@@ -77,7 +77,15 @@ class MatchmetaStack(cdk.Stack):
             self, 'deployarn',
             description = 'AMI Pipeline Deploy Arn',
             parameter_name = '/matchmeta/deploy/arn',
-            string_value = 'arn:aws:iam::'+str(account)+':role/cdk-'+qualifier+'-deploy-role-'+str(account)+'-'+region,
+            string_value = 'arn:aws:iam::'+account+':role/cdk-'+qualifier+'-cfn-exec-role-'+account+'-'+region,
+            tier = _ssm.ParameterTier.STANDARD,
+        )
+
+        stackname = _ssm.StringParameter(
+            self, 'stackname',
+            description = 'AMI Pipeline Stack Name',
+            parameter_name = '/matchmeta/deploy/stack',
+            string_value = 'EMPTY',
             tier = _ssm.ParameterTier.STANDARD,
         )
 
@@ -136,6 +144,13 @@ class MatchmetaStack(cdk.Stack):
             tier = _ssm.ParameterTier.STANDARD,
         )
 
+        copyfiles = _deployment.BucketDeployment(
+            self, 'copyfiles',
+            sources = [_deployment.Source.asset('template')],
+            destination_bucket = template,
+            prune = False
+        )
+
         upload = _s3.Bucket(
             self, 'upload', versioned = True,
             encryption = _s3.BucketEncryption.S3_MANAGED,
@@ -170,11 +185,15 @@ class MatchmetaStack(cdk.Stack):
             _iam.PolicyStatement(
                 actions = [
                     'cloudformation:CreateStack',
+                    'cloudformation:DescribeStacks',
+                    'cloudformation:DeleteStack',
                     'dynamodb:PutItem',
                     'dynamodb:Query',
+                    'dynamodb:UpdateItem',
                     'ec2:DescribeImages',
                     'iam:PassRole',
                     's3:GetObject',
+                    's3:PutObject',
                     'ssm:GetParameter',
                     'ssm:PutParameter',
                 ],
@@ -241,8 +260,9 @@ class MatchmetaStack(cdk.Stack):
                 INSTANCE_TYPE = ec2type.parameter_name,
                 ARCH_TYPE = archtype.parameter_name,
                 DEPLOY_ARN = deployarn.parameter_name,
+                STACK_NAME = stackname.parameter_name,
                 STATUS_SSM = status.parameter_name,
-                #S3_BUCKET_BINARY = aws2binary.url_for_object('runmeta.cfn.yaml')
+                TEMPLATE = template.url_for_object('template.cfn.yaml')
             ),
             architecture = _lambda.Architecture.ARM_64,
             memory_size = 128

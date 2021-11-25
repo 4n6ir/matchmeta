@@ -226,9 +226,9 @@ Resources:
         awscopygetmeta:
           commands:
             "000":
-              command: pip3 install getmeta
+              command: /usr/bin/pip3 install getmeta
             "001":
-              command: cd /tmp && getmeta
+              command: cd /tmp && /usr/local/bin/getmeta
             "002":
               command:
                 Fn::Join:
