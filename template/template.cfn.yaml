@@ -1,0 +1,254 @@
+Resources:
+  TemporaryVPC7B62D817:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.42.0/24
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: RunmetaStack/TemporaryVPC
+        - Key: runmeta
+          Value: runmeta
+  TemporaryVPCPublicSubnet1Subnet25E1A4CA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 192.168.42.0/24
+      VpcId:
+        Ref: TemporaryVPC7B62D817
+      AvailabilityZone: us-west-2a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: Name
+          Value: RunmetaStack/TemporaryVPC/PublicSubnet1
+        - Key: runmeta
+          Value: runmeta
+  TemporaryVPCPublicSubnet1RouteTable36968F6D:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: TemporaryVPC7B62D817
+      Tags:
+        - Key: Name
+          Value: RunmetaStack/TemporaryVPC/PublicSubnet1
+        - Key: runmeta
+          Value: runmeta
+  TemporaryVPCPublicSubnet1RouteTableAssociation0E9F2A99:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: TemporaryVPCPublicSubnet1RouteTable36968F6D
+      SubnetId:
+        Ref: TemporaryVPCPublicSubnet1Subnet25E1A4CA
+  TemporaryVPCPublicSubnet1DefaultRouteBCFD2063:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: TemporaryVPCPublicSubnet1RouteTable36968F6D
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: TemporaryVPCIGW2D0EB1EB
+    DependsOn:
+      - TemporaryVPCVPCGWBC7F52FC
+  TemporaryVPCIGW2D0EB1EB:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: RunmetaStack/TemporaryVPC
+        - Key: runmeta
+          Value: runmeta
+  TemporaryVPCVPCGWBC7F52FC:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: TemporaryVPC7B62D817
+      InternetGatewayId:
+        Ref: TemporaryVPCIGW2D0EB1EB
+  TemporaryRoleE5449BEE:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: runmeta
+          Value: runmeta
+  TemporaryRoleDefaultPolicy15A8F53A:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:ListBucket
+              - s3:GetBucketAcl
+              - s3:GetObject
+              - s3:PutObject
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - cloudformation:DescribeStackResource
+              - cloudformation:SignalResource
+            Effect: Allow
+            Resource:
+              Ref: AWS::StackId
+        Version: "2012-10-17"
+      PolicyName: TemporaryRoleDefaultPolicy15A8F53A
+      Roles:
+        - Ref: TemporaryRoleE5449BEE
+  TemporaryEC2InstanceSecurityGroupCC68AC80:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RunmetaStack/TemporaryEC2/InstanceSecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      Tags:
+        - Key: Name
+          Value: RunmetaStack/TemporaryEC2
+        - Key: runmeta
+          Value: runmeta
+      VpcId:
+        Ref: TemporaryVPC7B62D817
+  TemporaryEC2InstanceProfileB0A1F3D1:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: TemporaryRoleE5449BEE
+  TemporaryEC201C7701E6634a37364d1c22b:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-west-2a
+      IamInstanceProfile:
+        Ref: TemporaryEC2InstanceProfileB0A1F3D1
+      ImageId:
+        Ref: amiParameter
+      InstanceType:
+        Ref: ec2typeParameter
+      SecurityGroupIds:
+        - Fn::GetAtt:
+            - TemporaryEC2InstanceSecurityGroupCC68AC80
+            - GroupId
+      SubnetId:
+        Ref: TemporaryVPCPublicSubnet1Subnet25E1A4CA
+      Tags:
+        - Key: Name
+          Value: RunmetaStack/TemporaryEC2
+        - Key: runmeta
+          Value: runmeta
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+            - ""
+            - - |-
+                #!/bin/bash
+                # fingerprint: c9c4004ae2e18403
+                (
+                  set +e
+                  /opt/aws/bin/cfn-init -v --region 
+              - Ref: AWS::Region
+              - " --stack "
+              - Ref: AWS::StackName
+              - |-2
+                 --resource TemporaryEC201C7701E6634a37364d1c22b -c default
+                  /opt/aws/bin/cfn-signal -e $? --region 
+              - Ref: AWS::Region
+              - " --stack "
+              - Ref: AWS::StackName
+              - |-2
+                 --resource TemporaryEC201C7701E6634a37364d1c22b
+                  cat /var/log/cfn-init.log >&2
+                )
+    DependsOn:
+      - TemporaryRoleDefaultPolicy15A8F53A
+      - TemporaryRoleE5449BEE
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT30M
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - yumpackages
+            - awscli2install
+            - awscopydwarfs
+            - awscopygetmeta
+        yumpackages:
+          packages:
+            yum:
+              file-devel: []
+              python3-pip: []
+              unzip: []
+              wget: []
+        awscli2install:
+          commands:
+            "000":
+              command:
+                Fn::Join:
+                  - ""
+                  - - wget https://awscli.amazonaws.com/awscli-exe-linux-
+                    - Ref: archtypeParameter
+                    - .zip -P /tmp/
+            "001":
+              command:
+                Fn::Join:
+                  - ""
+                  - - unzip /tmp/awscli-exe-linux-
+                    - Ref: archtypeParameter
+                    - .zip -d /tmp
+            "002":
+              command: ./tmp/aws/install
+        awscopydwarfs:
+          commands:
+            "000":
+              command:
+                Fn::Join:
+                  - ""
+                  - - aws s3 cp /boot/System* s3://
+                    - Ref: dwarfParameter
+        awscopygetmeta:
+          commands:
+            "000":
+              command: pip3 install getmeta
+            "001":
+              command: cd /tmp && getmeta
+            "002":
+              command:
+                Fn::Join:
+                  - ""
+                  - - aws s3 cp /tmp/ip-* s3://
+                    - Ref: rawParameter
+Parameters:
+  amiParameter:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /matchmeta/ssm/ami
+  ec2typeParameter:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /matchmeta/ssm/ec2type
+  archtypeParameter:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /matchmeta/ssm/arch
+  dwarfParameter:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /matchmeta/bucket/dwarf
+  rawParameter:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /matchmeta/bucket/raw
+
