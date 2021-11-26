@@ -45,14 +45,13 @@ def handler(event, context):
                                 'running': 'ON'
                             }
                         )
-
-    client = boto3.client('ssm')
-    client.put_parameter(
-        Name = os.environ['STATUS_SSM'],
-        Value = status,
-        Type = 'String',
-        Overwrite = True
-    )
+                        client = boto3.client('ssm')
+                        client.put_parameter(
+                            Name = os.environ['STATUS_SSM'],
+                            Value = status,
+                            Type = 'String',
+                            Overwrite = True
+                        )
 
     return {
         'statusCode': 200,
