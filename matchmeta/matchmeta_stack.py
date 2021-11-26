@@ -10,6 +10,7 @@ from aws_cdk import (
     aws_logs as _logs,
     aws_s3 as _s3,
     aws_s3_deployment as _deployment,
+    aws_s3_notifications as _notifications,
     aws_ssm as _ssm,
 )
 
@@ -285,4 +286,82 @@ class MatchmetaStack(cdk.Stack):
 
         ### ADD EVENT
 
-###        
+### ZIP DWARF ###
+
+        zipdwarf = _lambda.Function(
+            self, 'zipdwarf',
+            runtime = _lambda.Runtime.PYTHON_3_9,
+            code = _lambda.Code.from_asset('zipdwarf'),
+            handler = 'zipdwarf.handler',
+            timeout = cdk.Duration.seconds(900),
+            role = role,
+            environment = dict(
+                DYNAMODB_TABLE = table.table_name,
+                AMI_ID = amiid.parameter_name,
+                DWARF_S3 = dwarf.bucket_name,
+                UPLOAD_S3 = upload.bucket_name,
+            ),
+            architecture = _lambda.Architecture.ARM_64,
+            memory_size = 256
+        )
+
+        zipdwarflogs = _logs.LogGroup(
+            self, 'zipdwarflogs',
+            log_group_name = '/aws/lambda/'+zipdwarf.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = cdk.RemovalPolicy.DESTROY
+        )
+
+        zipdwarfmonitor = _ssm.StringParameter(
+            self, 'zipdwarfmonitor',
+            description = 'AMI Pipeline Zip Dwarf Monitor',
+            parameter_name = '/matchmeta/monitor/dwarf',
+            string_value = '/aws/lambda/'+zipdwarf.function_name,
+            tier = _ssm.ParameterTier.STANDARD,
+        )
+
+        notification_zipdwarf = _notifications.LambdaDestination(zipdwarf)
+        dwarf.add_event_notification(_s3.EventType.OBJECT_CREATED, notification_zipdwarf)
+
+### ZIP RAW ###
+
+        zipraw = _lambda.Function(
+            self, 'zipraw',
+            runtime = _lambda.Runtime.PYTHON_3_9,
+            code = _lambda.Code.from_asset('zipraw'),
+            handler = 'zipraw.handler',
+            timeout = cdk.Duration.seconds(900),
+            role = role,
+            environment = dict(
+                DYNAMODB_TABLE = table.table_name,
+                AMI_ID = amiid.parameter_name,
+                RAW_S3 = raw.bucket_name,
+                UPLOAD_S3 = upload.bucket_name,
+                INSTANCE_TYPE = ec2type.parameter_name,
+                ARCH_TYPE = archtype.parameter_name,
+                DEPLOY_ARN = deployarn.parameter_name,
+                STACK_NAME = stackname.parameter_name,
+            ),
+            architecture = _lambda.Architecture.ARM_64,
+            memory_size = 256
+        )
+
+        ziprawlogs = _logs.LogGroup(
+            self, 'ziprawlogs',
+            log_group_name = '/aws/lambda/'+zipraw.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = cdk.RemovalPolicy.DESTROY
+        )
+
+        ziprawmonitor = _ssm.StringParameter(
+            self, 'ziprawmonitor',
+            description = 'AMI Pipeline Zip Raw Monitor',
+            parameter_name = '/matchmeta/monitor/raw',
+            string_value = '/aws/lambda/'+zipraw.function_name,
+            tier = _ssm.ParameterTier.STANDARD,
+        )
+
+        notification_zipraw = _notifications.LambdaDestination(zipraw)
+        raw.add_event_notification(_s3.EventType.OBJECT_CREATED, notification_zipraw)
+
+###

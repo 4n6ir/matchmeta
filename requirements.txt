@@ -9,4 +9,5 @@ aws_cdk.aws_lambda
 aws_cdk.aws_logs
 aws-cdk.aws_s3
 aws-cdk.aws_s3_deployment
+aws-cdk.aws_s3_notifications
 aws-cdk.aws_ssm
