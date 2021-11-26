@@ -32,11 +32,6 @@ def handler(event, context):
     )
     deploy_value = deploy_response['Parameter']['Value']
     
-    status_response = parameter.get_parameter(
-        Name = os.environ['STATUS_SSM']
-    )
-    status_value = status_response['Parameter']['Value']
-    
     if ami_value == 'EMPTY':
         response = table.query(
             KeyConditionExpression = Key('pk').eq('AMAZON#')

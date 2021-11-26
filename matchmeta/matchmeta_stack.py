@@ -262,7 +262,6 @@ class MatchmetaStack(cdk.Stack):
                 ARCH_TYPE = archtype.parameter_name,
                 DEPLOY_ARN = deployarn.parameter_name,
                 STACK_NAME = stackname.parameter_name,
-                STATUS_SSM = status.parameter_name,
                 TEMPLATE = template.url_for_object('template.cfn.yaml')
             ),
             architecture = _lambda.Architecture.ARM_64,
