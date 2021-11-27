@@ -48,8 +48,10 @@ def handler(event, context):
             if item['running'] == 'ON':
                 if item['architecture'] == 'x86_64':
                     ec2type = 't3a.nano'
+                    archtype = 'x86_64'
                 elif item['architecture'] == 'arm64':
                     ec2type = 't4g.nano'
+                    archtype = 'aarch64'
                 
                 response = parameter.put_parameter(
                     Name = os.environ['AMI_ID'],
@@ -68,7 +70,7 @@ def handler(event, context):
                 response = parameter.put_parameter(
                     Name = os.environ['ARCH_TYPE'],
                     Description = 'AMI Pipeline Instance Type',
-                    Value = item['architecture'],
+                    Value = archtype,
                     Overwrite = True
                 )
 

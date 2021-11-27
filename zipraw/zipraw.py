@@ -65,7 +65,7 @@ def handler(event, context):
     for stack in response['Stacks']:
 
         if stack['StackName'] == stack_value:
-            logger.info('SUCCESS: '+str(stack))
+            logger.info('SUCCESS '+str(stack))
                     
             updated = table.update_item(
                 Key = {
