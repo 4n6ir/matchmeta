@@ -102,7 +102,7 @@ def handler(event, context):
     
         for stack in response['Stacks']:
             if 'ROLLBACK_COMPLETE' in stack['StackStatus']:
-                logger.info('ERROR: '+str(stack))
+                logger.info('ERROR '+str(stack))
                 if stack['StackName'] == stack_value:
                     
                     updated = table.update_item(
