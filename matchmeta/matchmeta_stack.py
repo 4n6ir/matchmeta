@@ -283,7 +283,17 @@ class MatchmetaStack(cdk.Stack):
             tier = _ssm.ParameterTier.STANDARD,
         )
 
-        ### ADD EVENT
+        launchevent = _events.Rule(
+            self, 'launchevent',
+            schedule=_events.Schedule.cron(
+                minute='*/15',
+                hour='*',
+                month='*',
+                week_day='*',
+                year='*'
+            )
+        )
+        launchevent.add_target(_targets.LambdaFunction(amilaunch))
 
 ### ZIP DWARF ###
 
