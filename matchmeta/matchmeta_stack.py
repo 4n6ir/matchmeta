@@ -216,7 +216,7 @@ class MatchmetaStack(cdk.Stack):
                 STATUS_SSM = status.parameter_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 256
+            memory_size = 512
         )
 
         amilogs = _logs.LogGroup(
@@ -265,7 +265,7 @@ class MatchmetaStack(cdk.Stack):
                 TEMPLATE = template.url_for_object('template.cfn.yaml')
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 128
+            memory_size = 512
         )
         
         launchlogs = _logs.LogGroup(
@@ -311,7 +311,7 @@ class MatchmetaStack(cdk.Stack):
                 UPLOAD_S3 = upload.bucket_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 256
+            memory_size = 512
         )
 
         zipdwarflogs = _logs.LogGroup(
@@ -352,7 +352,7 @@ class MatchmetaStack(cdk.Stack):
                 STACK_NAME = stackname.parameter_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 256
+            memory_size = 512
         )
 
         ziprawlogs = _logs.LogGroup(
