@@ -20,8 +20,6 @@ def handler(event, context):
         ],
         Owners = ['amazon']
     )
-    
-    status = 'EMPTY'
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
@@ -32,7 +30,6 @@ def handler(event, context):
                 if item['ImageLocation'].endswith('-gp2'):          ### AMI Ends
                     exists = table.query(KeyConditionExpression=Key('pk').eq('AMAZON#') & Key('sk').eq('AMAZON#'+item['ImageId']))
                     if len(exists['Items']) == 0 and item['Public'] is True and item['State'] == 'available':
-                        status = 'NEW'
                         table.put_item(
                             Item= {
                                 'pk': 'AMAZON#',
@@ -44,13 +41,6 @@ def handler(event, context):
                                 'architecture': item['Architecture'],
                                 'running': 'ON'
                             }
-                        )
-                        client = boto3.client('ssm')
-                        client.put_parameter(
-                            Name = os.environ['STATUS_SSM'],
-                            Value = status,
-                            Type = 'String',
-                            Overwrite = True
                         )
 
     return {

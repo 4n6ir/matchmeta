@@ -105,6 +105,13 @@ def handler(event, context):
                 Overwrite = True
             )
 
+            response = parameter.put_parameter(
+                Name = os.environ['STATUS_SSM'],
+                Value = 'NEW',
+                Type = 'String',
+                Overwrite = True
+            )
+
     return {
         'statusCode': 200,
         'body': json.dumps('Compress Raw MatchMeta.Info')

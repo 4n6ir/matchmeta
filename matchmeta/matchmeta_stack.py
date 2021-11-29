@@ -213,7 +213,6 @@ class MatchmetaStack(cdk.Stack):
             role = role,
             environment = dict(
                 DYNAMODB_TABLE = table.table_name,
-                STATUS_SSM = status.parameter_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
             memory_size = 512
@@ -350,6 +349,7 @@ class MatchmetaStack(cdk.Stack):
                 ARCH_TYPE = archtype.parameter_name,
                 DEPLOY_ARN = deployarn.parameter_name,
                 STACK_NAME = stackname.parameter_name,
+                STATUS_SSM = status.parameter_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
             memory_size = 512
