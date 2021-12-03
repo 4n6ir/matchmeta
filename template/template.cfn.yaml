@@ -17,7 +17,10 @@ Resources:
       CidrBlock: 192.168.42.0/24
       VpcId:
         Ref: TemporaryVPC7B62D817
-      AvailabilityZone: us-west-2a
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
       MapPublicIpOnLaunch: true
       Tags:
         - Key: aws-cdk:subnet-name
@@ -78,7 +81,11 @@ Resources:
           - Action: sts:AssumeRole
             Effect: Allow
             Principal:
-              Service: ec2.amazonaws.com
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ec2.
+                    - Ref: AWS::URLSuffix
         Version: "2012-10-17"
       ManagedPolicyArns:
         - Fn::Join:
@@ -134,11 +141,17 @@ Resources:
   TemporaryEC201C7701E6634a37364d1c22b:
     Type: AWS::EC2::Instance
     Properties:
-      AvailabilityZone: us-west-2a
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
       IamInstanceProfile:
         Ref: TemporaryEC2InstanceProfileB0A1F3D1
       ImageId:
-        Ref: amiParameter
+        Fn::FindInMap:
+          - TemporaryEC2AmiMapCF0757A9
+          - Ref: AWS::Region
+          - ami
       InstanceType:
         Ref: ec2typeParameter
       SecurityGroupIds:
@@ -251,4 +264,26 @@ Parameters:
   rawParameter:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /matchmeta/bucket/raw
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+Mappings:
+  TemporaryEC2AmiMapCF0757A9:
+    us-west-2:
+      ami:
+        Ref: amiParameter
+Rules:
+  CheckBootstrapVersion:
+    Assertions:
+      - Assert:
+          Fn::Not:
+            - Fn::Contains:
+                - - "1"
+                  - "2"
+                  - "3"
+                  - "4"
+                  - "5"
+                - Ref: BootstrapVersion
+        AssertDescription: CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.
 

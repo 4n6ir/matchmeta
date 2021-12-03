@@ -1,7 +1,9 @@
 import os
 
 from aws_cdk import (
-    core as cdk,
+    Duration,
+    RemovalPolicy,
+    Stack,
     aws_dynamodb as _dynamodb,
     aws_events as _events,
     aws_events_targets as _targets,
@@ -14,10 +16,11 @@ from aws_cdk import (
     aws_ssm as _ssm,
 )
 
+from constructs import Construct
 
-class MatchmetaStack(cdk.Stack):
+class MatchmetaStack(Stack):
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
 ################################################################################
@@ -36,7 +39,7 @@ class MatchmetaStack(cdk.Stack):
             partition_key = {'name': 'pk', 'type': _dynamodb.AttributeType.STRING},
             sort_key = {'name': 'sk', 'type': _dynamodb.AttributeType.STRING},
             billing_mode = _dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy = cdk.RemovalPolicy.DESTROY,
+            removal_policy = RemovalPolicy.DESTROY,
             point_in_time_recovery = True
         )
         
@@ -104,7 +107,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'dwarf', versioned = True,
             encryption = _s3.BucketEncryption.S3_MANAGED,
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         dwarfssm = _ssm.StringParameter(
@@ -119,7 +122,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'raw', versioned = True,
             encryption = _s3.BucketEncryption.S3_MANAGED,
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         rawssm = _ssm.StringParameter(
@@ -134,7 +137,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'template', versioned = True,
             encryption = _s3.BucketEncryption.S3_MANAGED,
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         templatessm = _ssm.StringParameter(
@@ -156,7 +159,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'upload', versioned = True,
             encryption = _s3.BucketEncryption.S3_MANAGED,
             block_public_access = _s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         uploadssm = _ssm.StringParameter(
@@ -209,7 +212,7 @@ class MatchmetaStack(cdk.Stack):
             runtime = _lambda.Runtime.PYTHON_3_9,
             code = _lambda.Code.from_asset('amilist'),
             handler = 'amilist.handler',
-            timeout = cdk.Duration.seconds(900),
+            timeout = Duration.seconds(900),
             role = role,
             environment = dict(
                 DYNAMODB_TABLE = table.table_name,
@@ -222,7 +225,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'amilogs',
             log_group_name = '/aws/lambda/'+amicompute.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         amimonitor = _ssm.StringParameter(
@@ -252,7 +255,7 @@ class MatchmetaStack(cdk.Stack):
             runtime = _lambda.Runtime.PYTHON_3_9,
             code = _lambda.Code.from_asset('amilaunch'),
             handler = 'amilaunch.handler',
-            timeout = cdk.Duration.seconds(900),
+            timeout = Duration.seconds(900),
             role = role,
             environment = dict(
                 DYNAMODB_TABLE = table.table_name,
@@ -271,7 +274,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'launchlogs',
             log_group_name = '/aws/lambda/'+amilaunch.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
         
         launchmonitor = _ssm.StringParameter(
@@ -301,7 +304,7 @@ class MatchmetaStack(cdk.Stack):
             runtime = _lambda.Runtime.PYTHON_3_9,
             code = _lambda.Code.from_asset('zipdwarf'),
             handler = 'zipdwarf.handler',
-            timeout = cdk.Duration.seconds(900),
+            timeout = Duration.seconds(900),
             role = role,
             environment = dict(
                 DYNAMODB_TABLE = table.table_name,
@@ -317,7 +320,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'zipdwarflogs',
             log_group_name = '/aws/lambda/'+zipdwarf.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         zipdwarfmonitor = _ssm.StringParameter(
@@ -338,7 +341,7 @@ class MatchmetaStack(cdk.Stack):
             runtime = _lambda.Runtime.PYTHON_3_9,
             code = _lambda.Code.from_asset('zipraw'),
             handler = 'zipraw.handler',
-            timeout = cdk.Duration.seconds(900),
+            timeout = Duration.seconds(900),
             role = role,
             environment = dict(
                 DYNAMODB_TABLE = table.table_name,
@@ -359,7 +362,7 @@ class MatchmetaStack(cdk.Stack):
             self, 'ziprawlogs',
             log_group_name = '/aws/lambda/'+zipraw.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = cdk.RemovalPolicy.DESTROY
+            removal_policy = RemovalPolicy.DESTROY
         )
 
         ziprawmonitor = _ssm.StringParameter(

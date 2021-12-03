@@ -1,10 +1,11 @@
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as iam from '@aws-cdk/aws-iam';
-import * as ssm from '@aws-cdk/aws-ssm';
+import { Duration, Stack, StackProps } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 
-export class RunmetaStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class RunmetaStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     const vpc = new ec2.Vpc(this, 'TemporaryVPC', {
@@ -114,7 +115,7 @@ export class RunmetaStack extends cdk.Stack {
       }),
       initOptions: {
         configSets: ['default'],
-        timeout: cdk.Duration.minutes(30),
+        timeout: Duration.minutes(30),
       },
     });
 
