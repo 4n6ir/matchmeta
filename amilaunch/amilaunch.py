@@ -32,7 +32,7 @@ def handler(event, context):
     )
     deploy_value = deploy_response['Parameter']['Value']
     
-    if ami_value == 'EMPTY':
+    if ami_value == os.environ['VALIDTEST']:
         response = table.query(
             KeyConditionExpression = Key('pk').eq('AMAZON#')
         )
@@ -125,7 +125,7 @@ def handler(event, context):
                     response = parameter.put_parameter(
                         Name = os.environ['AMI_ID'],
                         Description = 'AMI Pipeline Image Id',
-                        Value = 'EMPTY',
+                        Value = os.environ['VALIDTEST'],
                         Overwrite = True
                     )
 

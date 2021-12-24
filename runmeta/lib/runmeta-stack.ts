@@ -23,9 +23,7 @@ export class RunmetaStack extends Stack {
       ],
     });
 
-    const ami = ssm.StringParameter.fromStringParameterAttributes(this, 'ami', {
-      parameterName: '/matchmeta/ssm/ami'
-    }).stringValue;
+    const linux = ec2.MachineImage.fromSsmParameter('/matchmeta/ssm/ami');
 
     const ec2type = ssm.StringParameter.fromStringParameterAttributes(this, 'ec2type', {
       parameterName: '/matchmeta/ssm/ec2type'
@@ -42,10 +40,6 @@ export class RunmetaStack extends Stack {
     const raw = ssm.StringParameter.fromStringParameterAttributes(this, 'raw', {
       parameterName: '/matchmeta/bucket/raw'
     }).stringValue;
-
-    const linux = ec2.MachineImage.genericLinux({
-      'us-west-2': ami,
-    });
 
     const role = new iam.Role(this, 'TemporaryRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),

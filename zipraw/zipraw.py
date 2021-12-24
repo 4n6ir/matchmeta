@@ -87,7 +87,7 @@ def handler(event, context):
             response = parameter.put_parameter(
                 Name = os.environ['AMI_ID'],
                 Description = 'AMI Pipeline Image Id',
-                Value = 'EMPTY',
+                Value = os.environ['VALIDTEST'],
                 Overwrite = True
             )
 

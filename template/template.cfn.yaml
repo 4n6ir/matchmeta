@@ -148,10 +148,7 @@ Resources:
       IamInstanceProfile:
         Ref: TemporaryEC2InstanceProfileB0A1F3D1
       ImageId:
-        Fn::FindInMap:
-          - TemporaryEC2AmiMapCF0757A9
-          - Ref: AWS::Region
-          - ami
+        Ref: SsmParameterValuematchmetassmamiC96584B6F00A464EAD1953AFF4B05118Parameter
       InstanceType:
         Ref: ec2typeParameter
       SecurityGroupIds:
@@ -249,9 +246,6 @@ Resources:
                   - - aws s3 cp /tmp/ip-* s3://
                     - Ref: rawParameter
 Parameters:
-  amiParameter:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /matchmeta/ssm/ami
   ec2typeParameter:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /matchmeta/ssm/ec2type
@@ -264,15 +258,13 @@ Parameters:
   rawParameter:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /matchmeta/bucket/raw
+  SsmParameterValuematchmetassmamiC96584B6F00A464EAD1953AFF4B05118Parameter:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /matchmeta/ssm/ami
   BootstrapVersion:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /cdk-bootstrap/4n6ir/version
     Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
-Mappings:
-  TemporaryEC2AmiMapCF0757A9:
-    us-west-2:
-      ami:
-        Ref: amiParameter
 Rules:
   CheckBootstrapVersion:
     Assertions:

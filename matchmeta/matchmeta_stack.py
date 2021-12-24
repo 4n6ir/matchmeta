@@ -26,6 +26,7 @@ class MatchmetaStack(Stack):
 ################################################################################
 
         qualifier = '4n6ir'                         # <-- Enter CDK Qualifier
+        unused_valid_ami = 'ami-8f6815bf'           # <-- US-WEST-2 (Oregon)
 
 ################################################################################
 
@@ -57,10 +58,11 @@ class MatchmetaStack(Stack):
             self, 'amiid',
             description = 'AMI Pipeline Image Id',
             parameter_name = '/matchmeta/ssm/ami',
-            string_value = 'EMPTY',
+            string_value = unused_valid_ami,
             tier = _ssm.ParameterTier.STANDARD,
+            data_type = _ssm.ParameterDataType.AWS_EC2_IMAGE
         )
-
+        
         ec2type = _ssm.StringParameter(
             self, 'ec2type',
             description = 'AMI Pipeline Instance Type',
@@ -264,7 +266,8 @@ class MatchmetaStack(Stack):
                 ARCH_TYPE = archtype.parameter_name,
                 DEPLOY_ARN = deployarn.parameter_name,
                 STACK_NAME = stackname.parameter_name,
-                TEMPLATE = template.url_for_object('template.cfn.yaml')
+                TEMPLATE = template.url_for_object('template.cfn.yaml'),
+                VALIDTEST = unused_valid_ami
             ),
             architecture = _lambda.Architecture.ARM_64,
             memory_size = 512
@@ -353,6 +356,7 @@ class MatchmetaStack(Stack):
                 DEPLOY_ARN = deployarn.parameter_name,
                 STACK_NAME = stackname.parameter_name,
                 STATUS_SSM = status.parameter_name,
+                VALIDTEST = unused_valid_ami
             ),
             architecture = _lambda.Architecture.ARM_64,
             memory_size = 512
