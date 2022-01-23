@@ -1,5 +1,3 @@
-import os
-
 from aws_cdk import (
     Duration,
     RemovalPolicy,
@@ -30,8 +28,8 @@ class MatchmetaStack(Stack):
 
 ################################################################################
 
-        account = os.environ['CDK_DEFAULT_ACCOUNT']
-        region = os.environ['CDK_DEFAULT_REGION']
+        account = Stack.of(self).account
+        region = Stack.of(self).region
 
 ### DATABASE ###
 
