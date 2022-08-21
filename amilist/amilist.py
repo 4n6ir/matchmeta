@@ -26,8 +26,8 @@ def handler(event, context):
 
     for item in response['Images']:
         if item['PlatformDetails'] == 'Linux/UNIX':
-            if item['ImageLocation'].startswith('amazon/amzn'):     ### AMI Starts
-                if item['ImageLocation'].endswith('-gp2'):          ### AMI Ends
+            if item['ImageLocation'].startswith('amazon/amzn') or item['ImageLocation'].startswith('amazon/al2022'):     ### AMI Starts
+                if item['ImageLocation'].endswith('-gp2') or item['ImageLocation'].startswith('amazon/al2022'):          ### AMI Ends
                     exists = table.query(KeyConditionExpression=Key('pk').eq('AMAZON#') & Key('sk').eq('AMAZON#'+item['ImageId']))
                     if len(exists['Items']) == 0 and item['Public'] is True and item['State'] == 'available':
                         table.put_item(
