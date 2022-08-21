@@ -1,3 +1,6 @@
+import boto3
+import sys
+
 from aws_cdk import (
     Duration,
     RemovalPolicy,
@@ -8,9 +11,12 @@ from aws_cdk import (
     aws_iam as _iam,
     aws_lambda as _lambda,
     aws_logs as _logs,
+    aws_logs_destinations as _destinations,
     aws_s3 as _s3,
     aws_s3_deployment as _deployment,
     aws_s3_notifications as _notifications,
+    aws_sns as _sns,
+    aws_sns_subscriptions as _subs,
     aws_ssm as _ssm,
 )
 
@@ -31,6 +37,24 @@ class MatchmetaStack(Stack):
         account = Stack.of(self).account
         region = Stack.of(self).region
 
+        try:
+            client = boto3.client('account')
+            operations = client.get_alternate_contact(
+                AlternateContactType='OPERATIONS'
+            )
+        except:
+            print('Missing IAM Permission --> account:GetAlternateContact')
+            sys.exit(1)
+            pass
+
+        operationstopic = _sns.Topic(
+            self, 'operationstopic'
+        )
+
+        operationstopic.add_subscription(
+            _subs.EmailSubscription(operations['AlternateContact']['EmailAddress'])
+        )
+
 ### DATABASE ###
 
         table = _dynamodb.Table(
@@ -41,7 +65,7 @@ class MatchmetaStack(Stack):
             removal_policy = RemovalPolicy.DESTROY,
             point_in_time_recovery = True
         )
-        
+
         tablessm = _ssm.StringParameter(
             self, 'tablessm',
             description = 'AMI Pipeline DynamoDB Table',
@@ -60,7 +84,7 @@ class MatchmetaStack(Stack):
             tier = _ssm.ParameterTier.STANDARD,
             data_type = _ssm.ParameterDataType.AWS_EC2_IMAGE
         )
-        
+
         ec2type = _ssm.StringParameter(
             self, 'ec2type',
             description = 'AMI Pipeline Instance Type',
@@ -178,13 +202,13 @@ class MatchmetaStack(Stack):
                 'lambda.amazonaws.com'
             )
         )
-        
+
         role.add_managed_policy(
             _iam.ManagedPolicy.from_aws_managed_policy_name(
                 'service-role/AWSLambdaBasicExecutionRole'
             )
         )
-        
+
         role.add_to_policy(
             _iam.PolicyStatement(
                 actions = [
@@ -203,6 +227,40 @@ class MatchmetaStack(Stack):
                 ],
                 resources = ['*']
             )
+        )
+
+        role.add_to_policy(
+            _iam.PolicyStatement(
+                actions = [
+                    'sns:Publish'
+                ],
+                resources = [
+                    operationstopic.topic_arn
+                ]
+            )
+        )
+
+### ERROR ###
+
+        error = _lambda.Function(
+            self, 'error',
+            runtime = _lambda.Runtime.PYTHON_3_9,
+            code = _lambda.Code.from_asset('error'),
+            handler = 'error.handler',
+            role = role,
+            environment = dict(
+                SNS_TOPIC = operationstopic.topic_arn
+            ),
+            architecture = _lambda.Architecture.ARM_64,
+            timeout = Duration.seconds(7),
+            memory_size = 128
+        )
+
+        errormonitor = _logs.LogGroup(
+            self, 'errormonitor',
+            log_group_name = '/aws/lambda/'+error.function_name,
+            retention = _logs.RetentionDays.ONE_DAY,
+            removal_policy = RemovalPolicy.DESTROY
         )
 
 ### AMI LAMBDA ###
@@ -228,12 +286,18 @@ class MatchmetaStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        amimonitor = _ssm.StringParameter(
-            self, 'amimonitor',
-            description = 'AMI Pipeline List Monitor',
-            parameter_name = '/matchmeta/monitor/ami',
-            string_value = '/aws/lambda/'+amicompute.function_name,
-            tier = _ssm.ParameterTier.STANDARD,
+        amisub = _logs.SubscriptionFilter(
+            self, 'amisub',
+            log_group = amilogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
+        )
+
+        amitime= _logs.SubscriptionFilter(
+            self, 'amitime',
+            log_group = amilogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
         amievent = _events.Rule(
@@ -246,6 +310,7 @@ class MatchmetaStack(Stack):
                 year='*'
             )
         )
+
         amievent.add_target(_targets.LambdaFunction(amicompute))
 
 ### AMI LAUNCH ###
@@ -270,20 +335,26 @@ class MatchmetaStack(Stack):
             architecture = _lambda.Architecture.ARM_64,
             memory_size = 512
         )
-        
+
         launchlogs = _logs.LogGroup(
             self, 'launchlogs',
             log_group_name = '/aws/lambda/'+amilaunch.function_name,
             retention = _logs.RetentionDays.ONE_DAY,
             removal_policy = RemovalPolicy.DESTROY
         )
-        
-        launchmonitor = _ssm.StringParameter(
-            self, 'launchmonitor',
-            description = 'AMI Pipeline Launch Monitor',
-            parameter_name = '/matchmeta/monitor/launch',
-            string_value = '/aws/lambda/'+amilaunch.function_name,
-            tier = _ssm.ParameterTier.STANDARD,
+
+        launchsub = _logs.SubscriptionFilter(
+            self, 'launchsub',
+            log_group = launchlogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
+        )
+
+        launchtime= _logs.SubscriptionFilter(
+            self, 'launchtime',
+            log_group = launchlogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
         launchevent = _events.Rule(
@@ -296,6 +367,7 @@ class MatchmetaStack(Stack):
                 year='*'
             )
         )
+
         launchevent.add_target(_targets.LambdaFunction(amilaunch))
 
 ### ZIP DWARF ###
@@ -324,12 +396,18 @@ class MatchmetaStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        zipdwarfmonitor = _ssm.StringParameter(
-            self, 'zipdwarfmonitor',
-            description = 'AMI Pipeline Zip Dwarf Monitor',
-            parameter_name = '/matchmeta/monitor/dwarf',
-            string_value = '/aws/lambda/'+zipdwarf.function_name,
-            tier = _ssm.ParameterTier.STANDARD,
+        zipdwarfsub = _logs.SubscriptionFilter(
+            self, 'zipdwarfsub',
+            log_group = zipdwarflogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
+        )
+
+        zipdwarftime= _logs.SubscriptionFilter(
+            self, 'zipdwarftime',
+            log_group = zipdwarflogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
         notification_zipdwarf = _notifications.LambdaDestination(zipdwarf)
@@ -367,15 +445,19 @@ class MatchmetaStack(Stack):
             removal_policy = RemovalPolicy.DESTROY
         )
 
-        ziprawmonitor = _ssm.StringParameter(
-            self, 'ziprawmonitor',
-            description = 'AMI Pipeline Zip Raw Monitor',
-            parameter_name = '/matchmeta/monitor/raw',
-            string_value = '/aws/lambda/'+zipraw.function_name,
-            tier = _ssm.ParameterTier.STANDARD,
+        ziprawsub = _logs.SubscriptionFilter(
+            self, 'ziprawsub',
+            log_group = ziprawlogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('ERROR')
+        )
+
+        ziprawtime= _logs.SubscriptionFilter(
+            self, 'ziprawtime',
+            log_group = ziprawlogs,
+            destination = _destinations.LambdaDestination(error),
+            filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
         notification_zipraw = _notifications.LambdaDestination(zipraw)
         raw.add_event_notification(_s3.EventType.OBJECT_CREATED, notification_zipraw)
-
-###
