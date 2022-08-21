@@ -14,13 +14,13 @@ Resources:
   TemporaryVPCPublicSubnet1Subnet25E1A4CA:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: 192.168.42.0/24
       VpcId:
         Ref: TemporaryVPC7B62D817
       AvailabilityZone:
         Fn::Select:
           - 0
           - Fn::GetAZs: ""
+      CidrBlock: 192.168.42.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: aws-cdk:subnet-name
@@ -102,9 +102,9 @@ Resources:
       PolicyDocument:
         Statement:
           - Action:
-              - s3:ListBucket
               - s3:GetBucketAcl
               - s3:GetObject
+              - s3:ListBucket
               - s3:PutObject
             Effect: Allow
             Resource: "*"
