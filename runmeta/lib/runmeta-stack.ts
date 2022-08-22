@@ -69,10 +69,15 @@ export class RunmetaStack extends cdk.Stack {
       role: role,
       init: ec2.CloudFormationInit.fromConfigSets({
         configSets: {
-          default: ['yumpackages', 'awscli2install', 'awscopydwarfs', 'awscopygetmeta'],
+          default: ['ec2wait', 'yumpackages', 'awscli2install', 'awscopydwarfs', 'awscopygetmeta'],
         },
         
         configs: {
+          ec2wait: new ec2.InitConfig([
+            ec2.InitCommand.shellCommand(
+              'sleep 5m',
+            ),
+          ]),
           yumpackages: new ec2.InitConfig([
             ec2.InitPackage.yum('file-devel'),
             ec2.InitPackage.yum('python3-pip'),
@@ -110,7 +115,7 @@ export class RunmetaStack extends cdk.Stack {
       }),
       initOptions: {
         configSets: ['default'],
-        timeout: Duration.minutes(30),
+        timeout: Duration.minutes(40),
       },
     });
 

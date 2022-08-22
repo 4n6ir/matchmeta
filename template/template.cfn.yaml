@@ -138,7 +138,7 @@ Resources:
     Properties:
       Roles:
         - Ref: TemporaryRoleE5449BEE
-  TemporaryEC201C7701E6634a37364d1c22b:
+  TemporaryEC201C7701Eb387af095dd6d9f0:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone:
@@ -168,7 +168,7 @@ Resources:
             - ""
             - - |-
                 #!/bin/bash
-                # fingerprint: c9c4004ae2e18403
+                # fingerprint: 5928085b03f9d5d0
                 (
                   set +e
                   /opt/aws/bin/cfn-init -v --region 
@@ -176,13 +176,13 @@ Resources:
               - " --stack "
               - Ref: AWS::StackName
               - |-2
-                 --resource TemporaryEC201C7701E6634a37364d1c22b -c default
+                 --resource TemporaryEC201C7701Eb387af095dd6d9f0 -c default
                   /opt/aws/bin/cfn-signal -e $? --region 
               - Ref: AWS::Region
               - " --stack "
               - Ref: AWS::StackName
               - |-2
-                 --resource TemporaryEC201C7701E6634a37364d1c22b
+                 --resource TemporaryEC201C7701Eb387af095dd6d9f0
                   cat /var/log/cfn-init.log >&2
                 )
     DependsOn:
@@ -191,15 +191,20 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Count: 1
-        Timeout: PT30M
+        Timeout: PT40M
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
           default:
+            - ec2wait
             - yumpackages
             - awscli2install
             - awscopydwarfs
             - awscopygetmeta
+        ec2wait:
+          commands:
+            "000":
+              command: sleep 5m
         yumpackages:
           packages:
             yum:
@@ -263,7 +268,7 @@ Parameters:
     Default: /matchmeta/ssm/ami
   BootstrapVersion:
     Type: AWS::SSM::Parameter::Value<String>
-    Default: /cdk-bootstrap/4n6ir/version
+    Default: /cdk-bootstrap/hnb659fds/version
     Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
 Rules:
   CheckBootstrapVersion:
