@@ -110,7 +110,7 @@ export class RunmetaStack extends cdk.Stack {
       }),
       initOptions: {
         configSets: ['default'],
-        timeout: Duration.minutes(30),
+        timeout: Duration.minutes(90),
       },
     });
 
