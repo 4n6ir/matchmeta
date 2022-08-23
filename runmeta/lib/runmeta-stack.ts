@@ -62,61 +62,26 @@ export class RunmetaStack extends cdk.Stack {
       )
     );
 
+    const multipartUserData = new ec2.MultipartUserData();
+    const commandsUserData = ec2.UserData.forLinux();
+    multipartUserData.addUserDataPart(commandsUserData, ec2.MultipartBody.SHELL_SCRIPT, true);
+
+    commandsUserData.addCommands('yum install file-devel python3-pip unzip wget -y');
+    commandsUserData.addCommands('wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -P /tmp/');
+    commandsUserData.addCommands('unzip /tmp/awscli-exe-linux-x86_64.zip -d /tmp');
+    commandsUserData.addCommands('./tmp/aws/install');
+    commandsUserData.addCommands('aws s3 cp /boot/System* s3://'+dwarf);
+    commandsUserData.addCommands('pip3 install getmeta');
+    commandsUserData.addCommands('cd /tmp && getmeta');
+    commandsUserData.addCommands('aws s3 cp /tmp/ip-* s3://'+raw);
+
     const instance = new ec2.Instance(this, 'TemporaryEC2', {
       instanceType: new ec2.InstanceType(ec2type),
       machineImage: linux,
       vpc: vpc,
       role: role,
-      init: ec2.CloudFormationInit.fromConfigSets({
-        configSets: {
-          default: ['ec2wait', 'yumpackages', 'awscli2install', 'awscopydwarfs', 'awscopygetmeta'],
-        },
-        
-        configs: {
-          ec2wait: new ec2.InitConfig([
-            ec2.InitCommand.shellCommand(
-              'sleep 5m',
-            ),
-          ]),
-          yumpackages: new ec2.InitConfig([
-            ec2.InitPackage.yum('file-devel'),
-            ec2.InitPackage.yum('python3-pip'),
-            ec2.InitPackage.yum('unzip'),
-            ec2.InitPackage.yum('wget'),
-          ]),
-          awscli2install: new ec2.InitConfig([
-            ec2.InitCommand.shellCommand(
-              'wget https://awscli.amazonaws.com/awscli-exe-linux-'+archtype+'.zip -P /tmp/',
-            ),
-            ec2.InitCommand.shellCommand(
-              'unzip /tmp/awscli-exe-linux-'+archtype+'.zip -d /tmp',
-            ),
-            ec2.InitCommand.shellCommand(
-              './tmp/aws/install',
-            ),
-          ]),
-          awscopydwarfs: new ec2.InitConfig([
-            ec2.InitCommand.shellCommand(
-              'aws s3 cp /boot/System* s3://'+dwarf,
-            ),
-          ]),
-          awscopygetmeta: new ec2.InitConfig([
-            ec2.InitCommand.shellCommand(
-              'pip3 install getmeta',
-            ),
-            ec2.InitCommand.shellCommand(
-              'cd /tmp && getmeta',
-            ),
-            ec2.InitCommand.shellCommand(
-              'aws s3 cp /tmp/ip-* s3://'+raw,
-            ),
-          ]),
-        },
-      }),
-      initOptions: {
-        configSets: ['default'],
-        timeout: Duration.minutes(40),
-      },
+      requireImdsv2: true,
+      userData: multipartUserData,
     });
 
   }

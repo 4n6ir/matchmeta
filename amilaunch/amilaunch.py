@@ -47,10 +47,10 @@ def handler(event, context):
         for item in responsedata:
             if item['running'] == 'ON':
                 if item['architecture'] == 'x86_64':
-                    ec2type = 't3a.nano'
+                    ec2type = 't3a.small'
                     archtype = 'x86_64'
                 elif item['architecture'] == 'arm64':
-                    ec2type = 't4g.nano'
+                    ec2type = 't4g.small'
                     archtype = 'aarch64'
                 
                 response = parameter.put_parameter(

@@ -108,12 +108,6 @@ Resources:
               - s3:PutObject
             Effect: Allow
             Resource: "*"
-          - Action:
-              - cloudformation:DescribeStackResource
-              - cloudformation:SignalResource
-            Effect: Allow
-            Resource:
-              Ref: AWS::StackId
         Version: "2012-10-17"
       PolicyName: TemporaryRoleDefaultPolicy15A8F53A
       Roles:
@@ -138,7 +132,7 @@ Resources:
     Properties:
       Roles:
         - Ref: TemporaryRoleE5449BEE
-  TemporaryEC201C7701Eb387af095dd6d9f0:
+  TemporaryEC201C7701E:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone:
@@ -151,6 +145,12 @@ Resources:
         Ref: SsmParameterValuematchmetassmamiC96584B6F00A464EAD1953AFF4B05118Parameter
       InstanceType:
         Ref: ec2typeParameter
+      LaunchTemplate:
+        LaunchTemplateName: RunmetaStackTemporaryEC2LaunchTemplateFD2BC5DE
+        Version:
+          Fn::GetAtt:
+            - TemporaryEC2LaunchTemplate1E5E11DB
+            - LatestVersionNumber
       SecurityGroupIds:
         - Fn::GetAtt:
             - TemporaryEC2InstanceSecurityGroupCC68AC80
@@ -166,90 +166,44 @@ Resources:
         Fn::Base64:
           Fn::Join:
             - ""
-            - - |-
-                #!/bin/bash
-                # fingerprint: 5928085b03f9d5d0
-                (
-                  set +e
-                  /opt/aws/bin/cfn-init -v --region 
-              - Ref: AWS::Region
-              - " --stack "
-              - Ref: AWS::StackName
-              - |-2
-                 --resource TemporaryEC201C7701Eb387af095dd6d9f0 -c default
-                  /opt/aws/bin/cfn-signal -e $? --region 
-              - Ref: AWS::Region
-              - " --stack "
-              - Ref: AWS::StackName
-              - |-2
-                 --resource TemporaryEC201C7701Eb387af095dd6d9f0
-                  cat /var/log/cfn-init.log >&2
-                )
+            - - |+
+                Content-Type: multipart/mixed; boundary="+AWS+CDK+User+Data+Separator=="
+                MIME-Version: 1.0
+
+                --+AWS+CDK+User+Data+Separator==
+                Content-Type: text/x-shellscript; charset="utf-8"
+                Content-Transfer-Encoding: base64
+
+              - Fn::Base64:
+                  Fn::Join:
+                    - ""
+                    - - |-
+                        #!/bin/bash
+                        yum install file-devel python3-pip unzip wget -y
+                        wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -P /tmp/
+                        unzip /tmp/awscli-exe-linux-x86_64.zip -d /tmp
+                        ./tmp/aws/install
+                        aws s3 cp /boot/System* s3://
+                      - Ref: dwarfParameter
+                      - |-
+                        
+                        pip3 install getmeta
+                        cd /tmp && getmeta
+                        aws s3 cp /tmp/ip-* s3://
+                      - Ref: rawParameter
+              - |
+                
+                --+AWS+CDK+User+Data+Separator==--
     DependsOn:
       - TemporaryRoleDefaultPolicy15A8F53A
       - TemporaryRoleE5449BEE
-    CreationPolicy:
-      ResourceSignal:
-        Count: 1
-        Timeout: PT40M
-    Metadata:
-      AWS::CloudFormation::Init:
-        configSets:
-          default:
-            - ec2wait
-            - yumpackages
-            - awscli2install
-            - awscopydwarfs
-            - awscopygetmeta
-        ec2wait:
-          commands:
-            "000":
-              command: sleep 5m
-        yumpackages:
-          packages:
-            yum:
-              file-devel: []
-              python3-pip: []
-              unzip: []
-              wget: []
-        awscli2install:
-          commands:
-            "000":
-              command:
-                Fn::Join:
-                  - ""
-                  - - wget https://awscli.amazonaws.com/awscli-exe-linux-
-                    - Ref: archtypeParameter
-                    - .zip -P /tmp/
-            "001":
-              command:
-                Fn::Join:
-                  - ""
-                  - - unzip /tmp/awscli-exe-linux-
-                    - Ref: archtypeParameter
-                    - .zip -d /tmp
-            "002":
-              command: ./tmp/aws/install
-        awscopydwarfs:
-          commands:
-            "000":
-              command:
-                Fn::Join:
-                  - ""
-                  - - aws s3 cp /boot/System* s3://
-                    - Ref: dwarfParameter
-        awscopygetmeta:
-          commands:
-            "000":
-              command: pip3 install getmeta
-            "001":
-              command: cd /tmp && getmeta
-            "002":
-              command:
-                Fn::Join:
-                  - ""
-                  - - aws s3 cp /tmp/ip-* s3://
-                    - Ref: rawParameter
+  TemporaryEC2LaunchTemplate1E5E11DB:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+      LaunchTemplateName: RunmetaStackTemporaryEC2LaunchTemplateFD2BC5DE
 Parameters:
   ec2typeParameter:
     Type: AWS::SSM::Parameter::Value<String>

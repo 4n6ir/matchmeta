@@ -21,9 +21,6 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
  * `cd matchmeta/runmeta`
  * `npm install @aws-cdk/aws-ec2`
- * `npm install @aws-cdk/aws-iam`
- * `npm install @aws-cdk/aws-s3`
- * `npm install @aws-cdk/aws-ssm`
  * `npm audit fix`
  * `npm audit fix --force`
 

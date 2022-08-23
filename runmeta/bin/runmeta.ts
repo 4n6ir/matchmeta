@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
+//import { DefaultStackSynthesizer } from 'aws-cdk-lib';
 import { RunmetaStack } from '../lib/runmeta-stack';
 
 const app = new cdk.App();
@@ -18,5 +19,8 @@ new RunmetaStack(app, 'RunmetaStack', {
   // env: { account: '123456789012', region: 'us-east-1' },
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+  //synthesizer: new DefaultStackSynthesizer({
+  //  qualifier: '4n6ir',
+  //}),
 });
 cdk.Tags.of(app).add('runmeta', 'runmeta');
