@@ -93,6 +93,7 @@ def handler(event, context):
                 break
     
     else:
+
         stack_response = parameter.get_parameter(
             Name = os.environ['STACK_NAME']
         )
@@ -142,6 +143,67 @@ def handler(event, context):
                         Value = 'EMPTY',
                         Overwrite = True
                     )
+
+        ec2_client = boto3.client('ec2')
+
+        response = ec2_client.describe_instances(
+            Filters=[
+                {
+                    'Name': 'instance-state-name',
+                    'Values': [
+                        'running',
+                    ],
+                    'Name': 'image-id',
+                    'Values': [
+                        ami_value,
+                    ] 
+                }
+            ]
+        )
+
+        ec2status = parameter.get_connection_status(
+            Target = response['Reservations'][0]['Instances'][0]['InstanceId']
+        )
+
+        if ec2status['Status'] == 'notconnected':
+
+            updated = table.update_item(
+                Key = {
+                    'pk': 'AMAZON#',
+                    'sk': 'AMAZON#'+ami_value
+                },
+                UpdateExpression = 'set running = :r',
+                ExpressionAttributeValues = {
+                    ':r': 'ERROR',
+                },
+                ReturnValues = 'UPDATED_NEW'
+            )
+
+            response = cfn_client.delete_stack(
+                StackName = stack_value,
+                RoleARN = deploy_value
+            )
+
+            response = parameter.put_parameter(
+                Name = os.environ['AMI_ID'],
+                Description = 'AMI Pipeline Image Id',
+                Value = os.environ['VALIDTEST'],
+                Overwrite = True
+            )
+
+            response = parameter.put_parameter(
+                Name = os.environ['INSTANCE_TYPE'],
+                Description = 'AMI Pipeline Instance Type',
+                Value = 'EMPTY',
+                Overwrite = True
+            )
+
+            response = parameter.put_parameter(
+                Name = os.environ['ARCH_TYPE'],
+                Description = 'AMI Pipeline Instance Type',
+                Value = 'EMPTY',
+                Overwrite = True
+            )
 
     return {
         'statusCode': 200,
