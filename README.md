@@ -12,4 +12,4 @@ An archive of the SHA256 & MD5 hash lists plus System.map files to generate Vola
 
 Also created a status page with RSS feed to know when AWS releases new AMIs, including a way to correlate matching IDs between regions.
 
- - https://status.matchmeta.info
+ - https://matchmeta.4n6ir.com
