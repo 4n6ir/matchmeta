@@ -180,8 +180,14 @@ Resources:
                     - - |-
                         #!/bin/bash
                         yum install file-devel python3-pip unzip wget -y
-                        wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -P /tmp/
-                        unzip /tmp/awscli-exe-linux-x86_64.zip -d /tmp
+                        wget https://awscli.amazonaws.com/awscli-exe-linux-
+                      - Ref: archtypeParameter
+                      - |-
+                        .zip -P /tmp/
+                        unzip /tmp/awscli-exe-linux-
+                      - Ref: archtypeParameter
+                      - |-
+                        .zip -d /tmp
                         ./tmp/aws/install
                         aws s3 cp /boot/System* s3://
                       - Ref: dwarfParameter
@@ -222,7 +228,7 @@ Parameters:
     Default: /matchmeta/ssm/ami
   BootstrapVersion:
     Type: AWS::SSM::Parameter::Value<String>
-    Default: /cdk-bootstrap/4n6ir/version
+    Default: /cdk-bootstrap/hnb659fds/version
     Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
 Rules:
   CheckBootstrapVersion:

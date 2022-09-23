@@ -67,8 +67,8 @@ export class RunmetaStack extends cdk.Stack {
     multipartUserData.addUserDataPart(commandsUserData, ec2.MultipartBody.SHELL_SCRIPT, true);
 
     commandsUserData.addCommands('yum install file-devel python3-pip unzip wget -y');
-    commandsUserData.addCommands('wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -P /tmp/');
-    commandsUserData.addCommands('unzip /tmp/awscli-exe-linux-x86_64.zip -d /tmp');
+    commandsUserData.addCommands('wget https://awscli.amazonaws.com/awscli-exe-linux-'+archtype+'.zip -P /tmp/');
+    commandsUserData.addCommands('unzip /tmp/awscli-exe-linux-'+archtype+'.zip -d /tmp');
     commandsUserData.addCommands('./tmp/aws/install');
     commandsUserData.addCommands('aws s3 cp /boot/System* s3://'+dwarf);
     commandsUserData.addCommands('pip3 install getmeta');
