@@ -228,7 +228,7 @@ Parameters:
     Default: /matchmeta/ssm/ami
   BootstrapVersion:
     Type: AWS::SSM::Parameter::Value<String>
-    Default: /cdk-bootstrap/hnb659fds/version
+    Default: /cdk-bootstrap/4n6ir/version
     Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
 Rules:
   CheckBootstrapVersion:
