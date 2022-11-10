@@ -1,6 +1,3 @@
-import boto3
-import sys
-
 from aws_cdk import (
     Duration,
     RemovalPolicy,
@@ -15,8 +12,6 @@ from aws_cdk import (
     aws_s3 as _s3,
     aws_s3_deployment as _deployment,
     aws_s3_notifications as _notifications,
-    aws_sns as _sns,
-    aws_sns_subscriptions as _subs,
     aws_ssm as _ssm,
 )
 
@@ -37,22 +32,19 @@ class MatchmetaStack(Stack):
         account = Stack.of(self).account
         region = Stack.of(self).region
 
-        try:
-            client = boto3.client('account')
-            operations = client.get_alternate_contact(
-                AlternateContactType='OPERATIONS'
-            )
-        except:
-            print('Missing IAM Permission --> account:GetAlternateContact')
-            sys.exit(1)
-            pass
+        if region == 'ap-northeast-1' or region == 'ap-south-1' or region == 'ap-southeast-1' or \
+            region == 'ap-southeast-2' or region == 'eu-central-1' or region == 'eu-west-1' or \
+            region == 'eu-west-2' or region == 'me-central-1' or region == 'us-east-1' or \
+            region == 'us-east-2' or region == 'us-west-2': number = str(1)
 
-        operationstopic = _sns.Topic(
-            self, 'operationstopic'
-        )
+        if region == 'af-south-1' or region == 'ap-east-1' or region == 'ap-northeast-2' or \
+            region == 'ap-northeast-3' or region == 'ap-southeast-3' or region == 'ca-central-1' or \
+            region == 'eu-north-1' or region == 'eu-south-1' or region == 'eu-west-3' or \
+            region == 'me-south-1' or region == 'sa-east-1' or region == 'us-west-1': number = str(2)
 
-        operationstopic.add_subscription(
-            _subs.EmailSubscription(operations['AlternateContact']['EmailAddress'])
+        layer = _lambda.LayerVersion.from_layer_version_arn(
+            self, 'layer',
+            layer_version_arn = 'arn:aws:lambda:'+region+':070176467818:layer:getpublicip:'+number
         )
 
 ### DATABASE ###
@@ -231,39 +223,17 @@ class MatchmetaStack(Stack):
             )
         )
 
-        role.add_to_policy(
-            _iam.PolicyStatement(
-                actions = [
-                    'sns:Publish'
-                ],
-                resources = [
-                    operationstopic.topic_arn
-                ]
-            )
-        )
-
 ### ERROR ###
 
-        error = _lambda.Function(
+        error = _lambda.Function.from_function_arn(
             self, 'error',
-            runtime = _lambda.Runtime.PYTHON_3_9,
-            code = _lambda.Code.from_asset('error'),
-            handler = 'error.handler',
-            role = role,
-            environment = dict(
-                SNS_TOPIC = operationstopic.topic_arn
-            ),
-            architecture = _lambda.Architecture.ARM_64,
-            timeout = Duration.seconds(7),
-            memory_size = 128
+            'arn:aws:lambda:'+region+':'+account+':function:shipit-error'
         )
 
-        errormonitor = _logs.LogGroup(
-            self, 'errormonitor',
-            log_group_name = '/aws/lambda/'+error.function_name,
-            retention = _logs.RetentionDays.ONE_DAY,
-            removal_policy = RemovalPolicy.DESTROY
-        )
+        timeout = _lambda.Function.from_function_arn(
+            self, 'timeout',
+            'arn:aws:lambda:'+region+':'+account+':function:shipit-timeout'
+        )    
 
 ### AMI LAMBDA ###
 
@@ -278,7 +248,10 @@ class MatchmetaStack(Stack):
                 DYNAMODB_TABLE = table.table_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 512
+            memory_size = 512,
+            layers = [
+                layer
+            ]
         )
 
         amilogs = _logs.LogGroup(
@@ -298,7 +271,7 @@ class MatchmetaStack(Stack):
         amitime= _logs.SubscriptionFilter(
             self, 'amitime',
             log_group = amilogs,
-            destination = _destinations.LambdaDestination(error),
+            destination = _destinations.LambdaDestination(timeout),
             filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
@@ -335,7 +308,10 @@ class MatchmetaStack(Stack):
                 VALIDTEST = unused_valid_ami
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 512
+            memory_size = 512,
+            layers = [
+                layer
+            ]
         )
 
         launchlogs = _logs.LogGroup(
@@ -355,7 +331,7 @@ class MatchmetaStack(Stack):
         launchtime= _logs.SubscriptionFilter(
             self, 'launchtime',
             log_group = launchlogs,
-            destination = _destinations.LambdaDestination(error),
+            destination = _destinations.LambdaDestination(timeout),
             filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
@@ -388,7 +364,10 @@ class MatchmetaStack(Stack):
                 UPLOAD_S3 = upload.bucket_name,
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 512
+            memory_size = 512,
+            layers = [
+                layer
+            ]
         )
 
         zipdwarflogs = _logs.LogGroup(
@@ -408,7 +387,7 @@ class MatchmetaStack(Stack):
         zipdwarftime= _logs.SubscriptionFilter(
             self, 'zipdwarftime',
             log_group = zipdwarflogs,
-            destination = _destinations.LambdaDestination(error),
+            destination = _destinations.LambdaDestination(timeout),
             filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 
@@ -437,7 +416,10 @@ class MatchmetaStack(Stack):
                 VALIDTEST = unused_valid_ami
             ),
             architecture = _lambda.Architecture.ARM_64,
-            memory_size = 512
+            memory_size = 512,
+            layers = [
+                layer
+            ]
         )
 
         ziprawlogs = _logs.LogGroup(
@@ -457,7 +439,7 @@ class MatchmetaStack(Stack):
         ziprawtime= _logs.SubscriptionFilter(
             self, 'ziprawtime',
             log_group = ziprawlogs,
-            destination = _destinations.LambdaDestination(error),
+            destination = _destinations.LambdaDestination(timeout),
             filter_pattern = _logs.FilterPattern.all_terms('Task','timed','out')
         )
 

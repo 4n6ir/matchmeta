@@ -18,6 +18,7 @@ MatchmetaStack(
     )
 )
 
-cdk.Tags.of(app).add('matchmeta','matchmeta')
+cdk.Tags.of(app).add('Alias','MatchMeta')
+cdk.Tags.of(app).add('GitHub','https://github.com/jblukach/matchmeta.git')
 
 app.synth()
