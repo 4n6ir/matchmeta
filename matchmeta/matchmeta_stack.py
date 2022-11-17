@@ -1,4 +1,7 @@
+import cdk_nag
+
 from aws_cdk import (
+    Aspects,
     Duration,
     RemovalPolicy,
     Stack,
@@ -28,6 +31,22 @@ class MatchmetaStack(Stack):
         unused_valid_ami = 'ami-8f6815bf'           # <-- US-WEST-2 (Oregon)
 
 ################################################################################
+
+        Aspects.of(self).add(
+            cdk_nag.AwsSolutionsChecks(
+                log_ignores = True,
+                verbose = True
+            )
+        )
+
+        cdk_nag.NagSuppressions.add_stack_suppressions(
+            self, suppressions = [
+                {'id': 'AwsSolutions-S1','reason': 'GitHub Issue'},
+                {'id': 'AwsSolutions-S10','reason': 'GitHub Issue'},
+                {'id': 'AwsSolutions-IAM4','reason': 'GitHub Issue'},
+                {'id': 'AwsSolutions-IAM5','reason': 'GitHub Issue'}
+            ]
+        )
 
         account = Stack.of(self).account
         region = Stack.of(self).region
