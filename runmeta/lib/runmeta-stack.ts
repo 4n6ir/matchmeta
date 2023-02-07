@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
-import { Duration } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { Duration } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
@@ -10,7 +10,7 @@ export class RunmetaStack extends cdk.Stack {
     super(scope, id, props);
 
     const vpc = new ec2.Vpc(this, 'TemporaryVPC', {
-      cidr: '192.168.42.0/24',
+      ipAddresses: ec2.IpAddresses.cidr('192.168.42.0/24'),
       maxAzs: 1,
       natGateways: 0,
       enableDnsHostnames: true,
