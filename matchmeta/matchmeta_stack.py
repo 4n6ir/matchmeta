@@ -223,6 +223,7 @@ class MatchmetaStack(Stack):
                     'cloudformation:CreateStack',
                     'cloudformation:DescribeStacks',
                     'cloudformation:DeleteStack',
+                    'cloudformation:ListStacks',
                     'dynamodb:PutItem',
                     'dynamodb:Query',
                     'dynamodb:UpdateItem',
