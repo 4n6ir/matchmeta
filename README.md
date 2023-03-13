@@ -1,15 +1,30 @@
-# matchmeta
+![MatchMeta.Info](MMI.PNG)
 
-MatchMeta.Info project takes a list of AMIs owned by Amazon in the Oregon (US-WEST-2) region for x86_64 and arm64 architecture to collect investigation artifacts automatically.
+Amazon Web Services (AWS) regularly releases new Amazon Machine Images (AMI) for Amazon Linux, requiring the generation of digital artifacts necessary for cybersecurity investigations. 
 
-AMI names that start with ```amazon/amzn``` or ```amazon/al2022``` and may end with ```-gp2``` will be launched into a temporary VPC to collect the ```System.map``` file and run the ```getmeta``` collection script.
+Amazon-owned AMI names that start with ```amazon/amzn``` or ```amazon/al2022``` and may end with ```-gp2``` will be launched into a temporary VPC in Oregon (US-WEST-2) region to automatically collect the ```System.map``` file and run the ```getmeta``` collection script for ```x86_64``` and ```arm64``` architecture.
 
- - https://github.com/jblukach/getmeta
+https://github.com/4n6ir/getmeta
 
-An archive of the SHA256 & MD5 hash lists plus System.map files to generate Volatility3 profiles for Amazon Linux are stored in this Github repository.
+This enrichment option allows the analyst to take traditional hashing a step further by knowing which directories, files, and paths are standard for specific releases of the Amazon Linux distribution.
 
- - https://github.com/4n6ir/matchmeta.info
+```python
 
-Also created a status page with RSS feed to know when AWS releases new AMIs, including a way to correlate matching IDs between regions.
+import requests
 
- - https://matchmeta.4n6ir.com
+key = ''
+url = 'https://sha256.lukach.io' # https://md5.lukach.io
+
+headers = {'x-api-key': key}
+
+r = requests.get(url, headers = headers)
+
+output = r.json()
+
+d = requests.get(output['link'])
+
+if d.status_code == 200:
+   with open(output['filename'], 'wb') as f:
+     f.write(d.content)
+
+```
